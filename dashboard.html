@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Generator - Upload & Create</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .upload-section {
+            padding: 50px 40px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .upload-zone:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-zone svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-zone h3 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .upload-zone p {
+            color: #666;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0);
+        }
+
+        .file-name {
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .processing-section {
+            padding: 50px 40px;
+            display: none;
+        }
+
+        .processing-section.active {
+            display: block;
+        }
+
+        .progress-title {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .progress-container {
+            margin-bottom: 40px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .step.active {
+            opacity: 1;
+        }
+
+        .step.completed {
+            opacity: 0.7;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #666;
+            font-size: 1.2em;
+            margin-right: 20px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .step.active .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            box-shadow: 0 0 0 10px rgba(102, 126, 234, 0.1);
+        }
+
+        .step.completed .step-number {
+            background: #4caf50;
+            border-color: #4caf50;
+            color: white;
+        }
+
+        .step.completed .step-number::after {
+            content: '✓';
+            position: absolute;
+            font-size: 1.5em;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .step-description {
+            font-size: 0.95em;
+            color: #999;
+        }
+
+        .step.active .step-title {
+            color: #667eea;
+        }
+
+        .overall-progress {
+            margin: 40px 0;
+        }
+
+        .progress-bar-background {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: right;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .completion-section {
+            padding: 50px 40px;
+            display: none;
+            text-align: center;
+        }
+
+        .completion-section.active {
+            display: block;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(0.8); }
+            50% { transform: scale(1.1); }
+        }
+
+        .completion-message h2 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .completion-message p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+        }
+
+        .new-video-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .new-video-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .error-section {
+            padding: 50px 40px;
+            display: none;
+            text-align: center;
+        }
+
+        .error-section.active {
+            display: block;
+        }
+
+        .error-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: #f44336;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+        }
+
+        .error-message h2 {
+            color: #f44336;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .error-message p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .try-again-btn {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .try-again-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(244, 67, 54, 0.3);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .upload-section, .processing-section, .completion-section, .error-section {
+                padding: 30px 20px;
+            }
+
+            .upload-zone {
+                padding: 40px 20px;
+            }
+
+            .upload-zone svg {
+                width: 60px;
+                height: 60px;
+            }
+
+            .step {
+                margin-bottom: 20px;
+            }
+
+            .step-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1em;
+                margin-right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 AI Video Generator</h1>
+            <p>Upload your Polish voiceover and we'll create a complete 30-40 minute video</p>
+        </div>
+
+        <div class="card">
+            <!-- Upload Section -->
+            <div id="uploadSection" class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h3>Upload Your Voiceover</h3>
+                    <p>Drag & drop your Polish audio file here, or click to browse</p>
+                    <p style="font-size: 0.9em; color: #999;">Supported formats: MP3, WAV, M4A (up to 2GB)</p>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+                    <input type="file" id="fileInput" class="file-input" accept="audio/*">
+                    <div class="file-name" id="fileName"></div>
+                </div>
+            </div>
+
+            <!-- Processing Section -->
+            <div id="processingSection" class="processing-section">
+                <div class="progress-title">Creating Your Video...</div>
+                
+                <div class="overall-progress">
+                    <div class="progress-bar-background">
+                        <div class="progress-bar-fill" id="progressBar"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+
+                <div class="progress-container" id="stepsContainer">
+                    <!-- Steps will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Completion Section -->
+            <div id="completionSection" class="completion-section">
+                <div class="success-icon">✓</div>
+                <div class="completion-message">
+                    <h2>Video Ready!</h2>
+                    <p>Your 30-40 minute AI video has been created successfully.</p>
+                    <p style="color: #999; font-size: 0.9em;">The video includes your Polish voiceover, AI-generated visuals, and auto-captions.</p>
+                </div>
+                <div>
+                    <button class="download-btn" id="downloadBtn">📥 Download Video (MP4)</button>
+                    <button class="new-video-btn" onclick="resetForm()">Create Another Video</button>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="errorSection" class="error-section">
+                <div class="error-icon">⚠</div>
+                <div class="error-message">
+                    <h2>Something went wrong</h2>
+                    <p id="errorMessage">An error occurred while processing your video.</p>
+                </div>
+                <button class="try-again-btn" onclick="resetForm()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const uploadSection = document.getElementById('uploadSection');
+        const processingSection = document.getElementById('processingSection');
+        const completionSection = document.getElementById('completionSection');
+        const errorSection = document.getElementById('errorSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const stepsContainer = document.getElementById('stepsContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let currentJobId = null;
+        let pollInterval = null;
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName.textContent = `✓ Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`;
+                fileName.style.display = 'block';
+            }
+        }
+
+        uploadZone.addEventListener('click', () => {
+            if (fileInput.files.length === 0) {
+                fileInput.click();
+            } else {
+                uploadVideo();
+            }
+        });
+
+        function uploadVideo() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('voiceover', file);
+
+            uploadSection.style.display = 'none';
+            processingSection.classList.add('active');
+
+            // Create steps UI
+            const steps = [
+                "Transcribing voiceover",
+                "Analyzing content",
+                "Generating image prompts",
+                "Ready for image generation",
+                "Creating video animations",
+                "Generating captions",
+                "Preparing for assembly",
+                "Complete - Ready for download"
+            ];
+
+            stepsContainer.innerHTML = steps.map((step, index) => `
+                <div class="step" id="step${index}">
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        <div class="step-title">${step}</div>
+                        <div class="step-description">Processing...</div>
+                    </div>
+                </div>
+            `).join('');
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                currentJobId = data.job_id;
+                pollProgress();
+                pollInterval = setInterval(pollProgress, 2000);
+            })
+            .catch(err => {
+                showError(err.message);
+            });
+        }
+
+        function pollProgress() {
+            if (!currentJobId) return;
+
+            fetch(`/api/progress/${currentJobId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        showError(data.error);
+                        return;
+                    }
+
+                    // Update progress bar
+                    progressBar.style.width = data.progress + '%';
+                    progressText.textContent = data.progress + '%';
+
+                    // Update steps
+                    data.steps.forEach((step, index) => {
+                        const stepEl = document.getElementById(`step${index}`);
+                        if (index < data.step_index) {
+                            stepEl.classList.add('completed');
+                            stepEl.classList.remove('active');
+                        } else if (index === data.step_index) {
+                            stepEl.classList.add('active');
+                            stepEl.classList.remove('completed');
+                        } else {
+                            stepEl.classList.remove('active', 'completed');
+                        }
+                    });
+
+                    // Check if complete
+                    if (data.status === 'complete') {
+                        clearInterval(pollInterval);
+                        showCompletion();
+                    } else if (data.status === 'error') {
+                        clearInterval(pollInterval);
+                        showError(data.error);
+                    }
+                })
+                .catch(err => {
+                    console.error('Poll error:', err);
+                });
+        }
+
+        function showCompletion() {
+            processingSection.classList.remove('active');
+            completionSection.classList.add('active');
+            
+            downloadBtn.addEventListener('click', () => {
+                window.location.href = `/api/download/${currentJobId}`;
+            });
+        }
+
+        function showError(message) {
+            processingSection.classList.remove('active');
+            errorSection.classList.add('active');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function resetForm() {
+            uploadSection.style.display = 'block';
+            processingSection.classList.remove('active');
+            completionSection.classList.remove('active');
+            errorSection.classList.remove('active');
+            fileInput.value = '';
+            fileName.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+            currentJobId = null;
+            if (pollInterval) clearInterval(pollInterval);
+        }
+    </script>
+</body>
+</html>
